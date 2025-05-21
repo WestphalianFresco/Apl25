@@ -1,0 +1,80 @@
+# Linux Lab #2 and #3 Combined Script
+
+# Lab 2 Part 1: Hiding media within media ===
+
+# Create a working directory
+mkdir stego
+
+# Move files into the stego folder (assuming you have bird1.jpeg and secret.txt ready)
+mv bird1.jpeg secret.txt stego/
+cd stego
+
+# Embed the secret text file into the JPEG image
+steghide embed -cf bird1.jpeg -ef secret.txt
+
+# Extract the hidden text from the JPEG image
+steghide extract -sf bird1.jpeg
+
+
+# === Lab 2 Part 2: SSH Configuration and Fail Authentication Capture ===
+
+# Install SSH server
+sudo apt update
+sudo apt install openssh-server -y
+
+# Edit SSH configuration
+sudo vim /etc/ssh/sshd_config
+
+# (Manually modify settings if needed, like PermitRootLogin or PasswordAuthentication)
+
+# Restart SSH service after editing
+sudo systemctl restart ssh
+
+# Attempt a wrong SSH login to generate failed login logs
+ssh wrongusername@127.0.0.1
+
+
+# === Lab 2 Part 3: Install and Configure rsyslog ===
+
+# Install rsyslog
+sudo apt install rsyslog -y
+
+# View authentication failures
+sudo cat /var/log/auth.log | grep "Failed"
+
+# Live monitor authentication logs
+sudo tail -f /var/log/auth.log
+
+
+# === Lab 2 Part 4: Install and Configure Fail2ban ===
+
+# Install fail2ban
+sudo apt install fail2ban -y
+
+# Create and edit jail.local configuration file
+sudo vim /etc/fail2ban/jail.local
+
+# Inside jail.local, add the following:
+: <<'ENDCONFIG'
+[sshd]
+enabled = true
+port = ssh
+logpath = /var/log/auth.log
+maxretry = 3
+bantime = 660
+ENDCONFIG
+
+# Restart fail2ban to apply changes
+sudo systemctl restart fail2ban
+
+
+# === Lab 3 Part 1: Monitor Fail2ban ===
+
+# Check overall fail2ban status
+sudo fail2ban-client status
+
+# Check specific SSH jail status
+sudo fail2ban-client status sshd
+
+# Live monitor Fail2ban logs
+sudo tail -f /var/log/fail2ban.log
